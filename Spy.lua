@@ -1346,10 +1346,23 @@ function Spy:ZoneChangedEvent()
 end
 
 function Spy:PlayerTargetEvent()
+
+	should_continue_target = false
+
 	local name = GetUnitName("target", true)
 	if name and UnitIsPlayer("target") and not SpyPerCharDB.IgnoreData[name] then
 		local playerData = SpyPerCharDB.PlayerData[name]
-		if UnitIsEnemy("player", "target") then
+
+		if Spy.db.profile.debugging_enabled then
+			if UnitIsFriend("player", "target") then
+				should_continue_target = true
+			end
+		else
+			if UnitIsEnemy("player", "target") then
+				should_continue_target = true
+			end
+		end
+		if should_continue_target then
 			name = strreplace(name, " - ", "-")
 
 			local learnt = true
@@ -1376,10 +1389,23 @@ function Spy:PlayerTargetEvent()
 end
 
 function Spy:PlayerMouseoverEvent()
+
+	should_continue_mouseover = false
+
 	local name = GetUnitName("mouseover", true)
 	if name and UnitIsPlayer("mouseover") and not SpyPerCharDB.IgnoreData[name] then
 		local playerData = SpyPerCharDB.PlayerData[name]
-		if UnitIsEnemy("player", "mouseover") then
+
+		if Spy.db.profile.debugging_enabled then
+			if UnitIsFriend("player", "mouseover") then
+				should_continue_mouseover = true
+			end
+		else
+			if UnitIsEnemy("player", "mouseover") then
+				should_continue_mouseover = true
+			end
+		end
+		if should_continue_mouseover then
 			name = strreplace(name, " - ", "-")
 
 			local learnt = true
@@ -1406,9 +1432,25 @@ function Spy:PlayerMouseoverEvent()
 end
 
 function Spy:CombatLogEvent(_, timestamp, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
+
+	should_continue_dest = false
+	should_continue_source = false
+
 	if Spy.EnabledInZone then
 		-- analyse the source unit
-		if bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE and srcGUID and srcName and not SpyPerCharDB.IgnoreData[srcName] then
+		if srcGUID and srcName and not SpyPerCharDB.IgnoreData[srcName] then
+			--check if using debug mode
+			if Spy.db.profile.debugging_enabled then
+				if bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_FRIENDLY) == COMBATLOG_OBJECT_REACTION_FRIENDLY then
+					should_continue_source = true
+				end
+			else -- we are not debugging, only check enemy
+				if bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE then
+					should_continue_source = true
+				end
+			end
+		end
+		if should_continue_source then
 			local srcType = bit.band(tonumber("0x"..strsub(srcGUID, 3, 5)), 0x00F)
 			if srcType == 0 or srcType == 8 then
 				local learnt = false
