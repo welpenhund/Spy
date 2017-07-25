@@ -1406,6 +1406,10 @@ function Spy:PlayerMouseoverEvent()
 			end
 		end
 		if should_continue_mouseover then
+			--fix the combat log
+			CombatLogClearEntries()
+
+
 			name = strreplace(name, " - ", "-")
 
 			local learnt = true
