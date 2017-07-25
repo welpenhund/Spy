@@ -223,9 +223,9 @@ Spy.options = {
 					set = function(info, value)
 						Spy.db.profile.debugging_enabled = value
 						if value then
-							print("Debugging has been enabled for addon Spy.")
+							DEFAULT_CHAT_FRAME:AddMessage("Debugging has been enabled for addon Spy.")
 						else
-							print("Debugging has been disabled for addon Spy.")
+							DEFAULT_CHAT_FRAME:AddMessage("Debugging has been disabled for addon Spy.")
 						end
 					end,
 				},
