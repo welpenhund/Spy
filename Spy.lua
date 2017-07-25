@@ -833,10 +833,10 @@ Spy.optionsSlash = {
 			func = function()
 				if Spy.db.profile.debugging_enabled then
 					Spy.db.profile.debugging_enabled = false
-					print("Debugging has been disabled for addon Spy.")
+					DEFAULT_CHAT_FRAME:AddMessage("Debugging has been disabled for addon Spy.")
 				else
 					Spy.db.profile.debugging_enabled = true
-					print("Debugging has been enabled for addon Spy.")
+					DEFAULT_CHAT_FRAME:AddMessage("Debugging has been enabled for addon Spy.")
 				end
 			end,
 			dialogHidden = true
