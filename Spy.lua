@@ -211,24 +211,6 @@ Spy.options = {
 						Spy.db.profile.DisplayLastSeen = value
 					end,
 				},
-				DisplayDebug = {
-					name = L["DebugDisplay"],
-					desc = L["DebugDescription"],
-					type = "toggle",
-					order = 8,
-					width = "full",
-					get = function(info)
-						return Spy.db.profile.debugging_enabled
-					end,
-					set = function(info, value)
-						Spy.db.profile.debugging_enabled = value
-						if value then
-							DEFAULT_CHAT_FRAME:AddMessage("Debugging has been enabled for addon Spy.")
-						else
-							DEFAULT_CHAT_FRAME:AddMessage("Debugging has been disabled for addon Spy.")
-						end
-					end,
-				},
 			},
 		},
 		AlertOptions = {
@@ -825,22 +807,6 @@ Spy.optionsSlash = {
 			end,
 			dialogHidden = true
 		},
-		debug = {
-			name = L["Debug"],
-			desc = L["DebugDescription"],
-			type = 'execute',
-			order = 7,
-			func = function()
-				if Spy.db.profile.debugging_enabled then
-					Spy.db.profile.debugging_enabled = false
-					DEFAULT_CHAT_FRAME:AddMessage("Debugging has been disabled for addon Spy.")
-				else
-					Spy.db.profile.debugging_enabled = true
-					DEFAULT_CHAT_FRAME:AddMessage("Debugging has been enabled for addon Spy.")
-				end
-			end,
-			dialogHidden = true
-		},
 	},
 }
 
@@ -1346,23 +1312,10 @@ function Spy:ZoneChangedEvent()
 end
 
 function Spy:PlayerTargetEvent()
-
-	should_continue_target = false
-
 	local name = GetUnitName("target", true)
 	if name and UnitIsPlayer("target") and not SpyPerCharDB.IgnoreData[name] then
 		local playerData = SpyPerCharDB.PlayerData[name]
-
-		if Spy.db.profile.debugging_enabled then
-			if UnitIsFriend("player", "target") then
-				should_continue_target = true
-			end
-		else
-			if UnitIsEnemy("player", "target") then
-				should_continue_target = true
-			end
-		end
-		if should_continue_target then
+		if UnitIsEnemy("player", "target") then
 			name = strreplace(name, " - ", "-")
 
 			local learnt = true
@@ -1389,23 +1342,10 @@ function Spy:PlayerTargetEvent()
 end
 
 function Spy:PlayerMouseoverEvent()
-
-	should_continue_mouseover = false
-
 	local name = GetUnitName("mouseover", true)
 	if name and UnitIsPlayer("mouseover") and not SpyPerCharDB.IgnoreData[name] then
 		local playerData = SpyPerCharDB.PlayerData[name]
-
-		if Spy.db.profile.debugging_enabled then
-			if UnitIsFriend("player", "mouseover") then
-				should_continue_mouseover = true
-			end
-		else
-			if UnitIsEnemy("player", "mouseover") then
-				should_continue_mouseover = true
-			end
-		end
-		if should_continue_mouseover then
+		if UnitIsEnemy("player", "mouseover") then
 			--fix the combat log
 			CombatLogClearEntries()
 
@@ -1436,46 +1376,32 @@ function Spy:PlayerMouseoverEvent()
 end
 
 function Spy:CombatLogEvent(_, timestamp, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
-
-	should_continue_dest = false
-	should_continue_source = false
-
 	if Spy.EnabledInZone then
 		-- analyse the source unit
 		if srcGUID and srcName and not SpyPerCharDB.IgnoreData[srcName] then
-			--check if using debug mode
-			if Spy.db.profile.debugging_enabled then
-				if bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_FRIENDLY) == COMBATLOG_OBJECT_REACTION_FRIENDLY then
-					should_continue_source = true
-				end
-			else -- we are not debugging, only check enemy
-				if bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE then
-					should_continue_source = true
-				end
-			end
-		end
-		if should_continue_source then
-			local srcType = bit.band(tonumber("0x"..strsub(srcGUID, 3, 5)), 0x00F)
-			if srcType == 0 or srcType == 8 then
-				local learnt = false
-				local detected = true
-				local playerData = SpyPerCharDB.PlayerData[srcName]
-				if not playerData or playerData.isGuess then
-					learnt, playerData = Spy:ParseUnitAbility(true, event, srcName, srcFlags, arg9, arg10)
-				end
-				if not learnt then
-					detected = Spy:UpdatePlayerData(srcName, nil, nil, nil, nil, true, nil)
-				end
-
-				if detected then
-					Spy:AddDetected(srcName, timestamp, learnt)
-					if event == "SPELL_AURA_APPLIED" and (arg10 == L["Stealth"] or arg10 == L["Prowl"]) then
-						Spy:AlertStealthPlayer(srcName)
+			if bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE then
+				local srcType = bit.band(tonumber("0x"..strsub(srcGUID, 3, 5)), 0x00F)
+				if srcType == 0 or srcType == 8 then
+					local learnt = false
+					local detected = true
+					local playerData = SpyPerCharDB.PlayerData[srcName]
+					if not playerData or playerData.isGuess then
+						learnt, playerData = Spy:ParseUnitAbility(true, event, srcName, srcFlags, arg9, arg10)
 					end
-				end
+					if not learnt then
+						detected = Spy:UpdatePlayerData(srcName, nil, nil, nil, nil, true, nil)
+					end
 
-				if dstGUID == UnitGUID("player") then
-					Spy.LastAttack = srcName
+					if detected then
+						Spy:AddDetected(srcName, timestamp, learnt)
+						if event == "SPELL_AURA_APPLIED" and (arg10 == L["Stealth"] or arg10 == L["Prowl"]) then
+							Spy:AlertStealthPlayer(srcName)
+						end
+					end
+
+					if dstGUID == UnitGUID("player") then
+						Spy.LastAttack = srcName
+					end
 				end
 			end
 		end

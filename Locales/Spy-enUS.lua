@@ -178,9 +178,6 @@ L["KOS"] = "KOS"
 L["KOSDescription"] = "Add/remove a player to/from the Kill On Sight list."
 L["Ignore"] = "Ignore"
 L["IgnoreDescription"] = "Add/remove a player to/from the Ignore list."
-L["Debug"] = "Debug"
-L["DebugDisplay"] = "Enable Addon Debugging"
-L["DebugDescription"] = "Allow detection for both horde and alliance, regardless of faction."
 
 -- Lists
 L["Nearby"] = "Nearby"
