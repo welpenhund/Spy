@@ -211,6 +211,24 @@ Spy.options = {
 						Spy.db.profile.DisplayLastSeen = value
 					end,
 				},
+				DisplayDebug = {
+					name = L["DebugDisplay"],
+					desc = L["DebugDescription"],
+					type = "toggle",
+					order = 8,
+					width = "full",
+					get = function(info)
+						return Spy.db.profile.debugging_enabled
+					end,
+					set = function(info, value)
+						Spy.db.profile.debugging_enabled = value
+						if value then
+							print("Debugging has been enabled for addon Spy.")
+						else
+							print("Debugging has been disabled for addon Spy.")
+						end
+					end,
+				},
 			},
 		},
 		AlertOptions = {
@@ -804,6 +822,22 @@ Spy.optionsSlash = {
 			pattern = "%a",
 			set = function(info, value)
 				Spy:ToggleIgnorePlayer(not SpyPerCharDB.IgnoreData[value], value)
+			end,
+			dialogHidden = true
+		},
+		debug = {
+			name = L["Debug"],
+			desc = L["DebugDescription"],
+			type = 'execute',
+			order = 7,
+			func = function()
+				if Spy.db.profile.debugging_enabled then
+					Spy.db.profile.debugging_enabled = false
+					print("Debugging has been disabled for addon Spy.")
+				else
+					Spy.db.profile.debugging_enabled = true
+					print("Debugging has been enabled for addon Spy.")
+				end
 			end,
 			dialogHidden = true
 		},
