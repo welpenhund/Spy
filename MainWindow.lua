@@ -132,197 +132,210 @@ function Spy:SetBarTextures(handle)
 end
 
 local info = {}
-function Spy_CreateBarDropdown(self, level)
-	if not level then return end
+function Spy_CreateBarDropdown(level)
+	level = level or 1
+
+	local player = nil
+
 	for k in pairs(info) do info[k] = nil end
-	if self and self.relativeTo.LeftText then
-		local player = self.relativeTo.LeftText:GetText()
-		if level == 1 then
-			info.isTitle = 1
-			info.text = player
+
+	--First, check if we're on level 1
+	if level == 1 then
+		--If so, get the name of the currently selected player
+		player = this.LeftText:GetText()
+
+		--Compare it with our storage
+		if Spy.db.profile.selected_player == nil or Spy.db.profile.selected_player ~= player then
+			Spy.db.profile.selected_player = player
+		end
+	else
+		player = Spy.db.profile.selected_player
+	end
+
+	if level == 1 then
+		info.isTitle = 1
+		info.text = player
+		info.notCheckable = true
+		UIDropDownMenu_AddButton(info, level)
+
+		info = UIDropDownMenu_CreateInfo()
+
+		if Spy.db.profile.CurrentList == 1 or Spy.db.profile.CurrentList == 2 then
+			info.isTitle = nil
 			info.notCheckable = true
+			info.hasArrow = true
+			info.disabled = nil
+			info.text = L["AnnounceDropDownMenu"]
+			info.value = { ["Key"] = L["AnnounceDropDownMenu"] }
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+		end
+
+		if not SpyPerCharDB.KOSData[player] then
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["AddToKOSList"]
+			info.func = function() Spy:ToggleKOSPlayer(true, player) end
+			info.value = nil
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+		else
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = true
+			info.disabled = nil
+			info.text = L["KOSReasonDropDownMenu"]
+			info.value = { ["Key"] = L["KOSReasonDropDownMenu"] }
+			info.arg1 = this:GetName()
 			UIDropDownMenu_AddButton(info, level)
 
-			info = UIDropDownMenu_CreateInfo()
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["RemoveFromKOSList"]
+			info.func = function() Spy:ToggleKOSPlayer(false, player) end
+			info.value = nil
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+		end
+		if not SpyPerCharDB.IgnoreData[player] then
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["AddToIgnoreList"]
+			info.func = function() Spy:ToggleIgnorePlayer(true, player) end
+			info.value = nil
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+		else
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["RemoveFromIgnoreList"]
+			info.func = function() Spy:ToggleIgnorePlayer(false, player) end
+			info.value = nil
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+		end
 
-			if Spy.db.profile.CurrentList == 1 or Spy.db.profile.CurrentList == 2 then
+		if Spy.db.profile.CurrentList == 1 then
+			info.isTitle = nil
+			info.notCheckable = true
+			info.disabled = nil
+			info.text = L["Clear"]
+			info.func = function() Spy:RemovePlayerFromList(player) end
+			info.value = nil
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+		end
+	elseif level == 2 then
+		local key = UIDROPDOWNMENU_MENU_VALUE["Key"]
+		info = UIDropDownMenu_CreateInfo()
+
+		if key == L["AnnounceDropDownMenu"] and (Spy.db.profile.CurrentList == 1 or Spy.db.profile.CurrentList == 2) then
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["PartyDropDownMenu"]
+			info.func = function() Spy:AnnouncePlayer(player, "PARTY") end
+			info.value = { ["Key"] = key; ["Subkey"] = 1; }
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["RaidDropDownMenu"]
+			info.func = function() Spy:AnnouncePlayer(player, "RAID") end
+			info.value = { ["Key"] = key; ["Subkey"] = 2; }
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["GuildDropDownMenu"]
+			info.func = function() Spy:AnnouncePlayer(player, "GUILD") end
+			info.value = { ["Key"] = key; ["Subkey"] = 3; }
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["LocalDefenseDropDownMenu"]
+			info.func = function() Spy:AnnouncePlayer(player, "LOCAL") end
+			info.value = { ["Key"] = key; ["Subkey"] = 4; }
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+		end
+
+		if key == L["KOSReasonDropDownMenu"] then
+			for i = 1, Spy_KOSReasonListLength do
+				local reason = Spy_KOSReasonList[i]
 				info.isTitle = nil
 				info.notCheckable = true
 				info.hasArrow = true
 				info.disabled = nil
-				info.text = L["AnnounceDropDownMenu"]
-				info.value = { ["Key"] = L["AnnounceDropDownMenu"] }
-				info.arg1 = self.relativeTo.name
+				info.text = reason.title
+				info.value = { ["Key"] = key; ["Subkey"] = reason.title; ["Index"] = i; }
+				info.arg1 = this:GetName()
 				UIDropDownMenu_AddButton(info, level)
 			end
 
-			if not SpyPerCharDB.KOSData[player] then
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = false
-				info.disabled = nil
-				info.text = L["AddToKOSList"]
-				info.func = function() Spy:ToggleKOSPlayer(true, player) end
-				info.value = nil
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-			else
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = true
-				info.disabled = nil
-				info.text = L["KOSReasonDropDownMenu"]
-				info.value = { ["Key"] = L["KOSReasonDropDownMenu"] }
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = false
-				info.disabled = nil
-				info.text = L["RemoveFromKOSList"]
-				info.func = function() Spy:ToggleKOSPlayer(false, player) end
-				info.value = nil
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
+			info.isTitle = nil
+			info.notCheckable = true
+			info.hasArrow = false
+			info.disabled = nil
+			info.text = L["KOSReasonClear"]
+			info.func = function()
+				Spy:SetKOSReason(player, nil)
+				CloseDropDownMenus(1)
 			end
-			if not SpyPerCharDB.IgnoreData[player] then
+			info.value = nil
+			info.arg1 = this:GetName()
+			UIDropDownMenu_AddButton(info, level)
+		end
+	elseif level == 3 then
+		local key = UIDROPDOWNMENU_MENU_VALUE["Key"]
+		local subkey = UIDROPDOWNMENU_MENU_VALUE["Subkey"]
+		local index = UIDROPDOWNMENU_MENU_VALUE["Index"]
+		local playerData = SpyPerCharDB.PlayerData[player]
+		if key == L["KOSReasonDropDownMenu"] then
+			for _, reason in pairs(Spy_KOSReasonList[index].content) do
 				info.isTitle = nil
-				info.notCheckable = true
+				info.notCheckable = false
 				info.hasArrow = false
 				info.disabled = nil
-				info.text = L["AddToIgnoreList"]
-				info.func = function() Spy:ToggleIgnorePlayer(true, player) end
-				info.value = nil
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-			else
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = false
-				info.disabled = nil
-				info.text = L["RemoveFromIgnoreList"]
-				info.func = function() Spy:ToggleIgnorePlayer(false, player) end
-				info.value = nil
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-			end
-
-			if Spy.db.profile.CurrentList == 1 then
-				info.isTitle = nil
-				info.notCheckable = true
-				info.disabled = nil
-				info.text = L["Clear"]
-				info.func = function() Spy:RemovePlayerFromList(player) end
-				info.value = nil
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-			end
-		elseif level == 2 then
-			local key = UIDROPDOWNMENU_MENU_VALUE["Key"]
-			info = UIDropDownMenu_CreateInfo()
-
-			if key == L["AnnounceDropDownMenu"] and (Spy.db.profile.CurrentList == 1 or Spy.db.profile.CurrentList == 2) then
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = false
-				info.disabled = nil
-				info.text = L["PartyDropDownMenu"]
-				info.func = function() Spy:AnnouncePlayer(player, "PARTY") end
-				info.value = { ["Key"] = key; ["Subkey"] = 1; }
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = false
-				info.disabled = nil
-				info.text = L["RaidDropDownMenu"]
-				info.func = function() Spy:AnnouncePlayer(player, "RAID") end
-				info.value = { ["Key"] = key; ["Subkey"] = 2; }
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = false
-				info.disabled = nil
-				info.text = L["GuildDropDownMenu"]
-				info.func = function() Spy:AnnouncePlayer(player, "GUILD") end
-				info.value = { ["Key"] = key; ["Subkey"] = 3; }
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = false
-				info.disabled = nil
-				info.text = L["LocalDefenseDropDownMenu"]
-				info.func = function() Spy:AnnouncePlayer(player, "LOCAL") end
-				info.value = { ["Key"] = key; ["Subkey"] = 4; }
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-			end
-
-			if key == L["KOSReasonDropDownMenu"] then
-				for i = 1, Spy_KOSReasonListLength do
-					local reason = Spy_KOSReasonList[i]
-					info.isTitle = nil
-					info.notCheckable = true
-					info.hasArrow = true
-					info.disabled = nil
-					info.text = reason.title
-					info.value = { ["Key"] = key; ["Subkey"] = reason.title; ["Index"] = i; }
-					info.arg1 = self.relativeTo.name
-					UIDropDownMenu_AddButton(info, level)
-				end
-
-				info.isTitle = nil
-				info.notCheckable = true
-				info.hasArrow = false
-				info.disabled = nil
-				info.text = L["KOSReasonClear"]
+				info.text = reason
 				info.func = function()
-					Spy:SetKOSReason(player, nil)
+					Spy:SetKOSReason(player, reason)
 					CloseDropDownMenus(1)
 				end
-				info.value = nil
-				info.arg1 = self.relativeTo.name
-				UIDropDownMenu_AddButton(info, level)
-			end
-		elseif level == 3 then
-			local key = UIDROPDOWNMENU_MENU_VALUE["Key"]
-			local subkey = UIDROPDOWNMENU_MENU_VALUE["Subkey"]
-			local index = UIDROPDOWNMENU_MENU_VALUE["Index"]
-			local playerData = SpyPerCharDB.PlayerData[player]
-			if key == L["KOSReasonDropDownMenu"] then
-				for _, reason in pairs(Spy_KOSReasonList[index].content) do
-					info.isTitle = nil
-					info.notCheckable = false
-					info.hasArrow = false
-					info.disabled = nil
-					info.text = reason
-					info.func = function()
-						Spy:SetKOSReason(player, reason)
-						CloseDropDownMenus(1)
-					end
-					info.checked = nil
-					if playerData and playerData.reason and playerData.reason[reason] == true then
-						info.checked = true
-					end
-					info.value = { ["Key"] = subkey; ["Subkey"] = index; }
-					info.arg1 = self.relativeTo.name
-					UIDropDownMenu_AddButton(info, level)
+				info.checked = nil
+				if playerData and playerData.reason and playerData.reason[reason] == true then
+					info.checked = true
 				end
+				info.value = { ["Key"] = subkey; ["Subkey"] = index; }
+				info.arg1 = this:GetName()
+				UIDropDownMenu_AddButton(info, level)
 			end
 		end
 	end
 end
 
 function Spy:BarDropDownOpen(myframe)
-	Spy_BarDropDownMenu = CreateFrame("Frame", "Spy_BarDropDownMenu", myframe)
-	Spy_BarDropDownMenu.displayMode = "MENU"
-	Spy_BarDropDownMenu.initialize	= Spy_CreateBarDropdown
+	Spy_BarDropDownMenu = CreateFrame("Frame", "Spy_BarDropDownMenu", myframe, "UIDropDownMenuTemplate")
+	UIDropDownMenu_Initialize(Spy_BarDropDownMenu, Spy_CreateBarDropdown, "MENU");
 
 	local leftPos = myframe:GetLeft()
 	local rightPos = myframe:GetRight()
@@ -344,7 +357,7 @@ function Spy:BarDropDownOpen(myframe)
 		side = "TOPRIGHT"
 		oside = "TOPLEFT"
 	end
-	UIDropDownMenu_SetAnchor(Spy_BarDropDownMenu, 0, 0, oside, myframe, side)
+	UIDropDownMenu_SetAnchor(0, 0, Spy_BarDropDownMenu, oside, myframe, side)
 end
 
 function Spy:SetupMainWindowButtons()

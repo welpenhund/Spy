@@ -673,7 +673,7 @@ function Spy:ButtonClicked()
 		elseif arg1 == "RightButton" then
 			Spy:BarDropDownOpen(this)
 			CloseDropDownMenus(1)
-			ToggleDropDownMenu(1, nil, PlayerFrameDropDown)
+			ToggleDropDownMenu(1, nil, Spy_BarDropDownMenu)
 		end
 	end
 end
