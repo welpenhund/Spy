@@ -437,7 +437,13 @@ function Spy:AnnouncePlayer(player, channel)
 				msg = msg.."- "
 				if playerData.level and playerData.isGuess == false then msg = msg..L["Level"].." "..playerData.level.." " end
 				if playerData.race and playerData.race ~= "" then msg = msg..playerData.race.." " end
-				if playerData.class and playerData.class ~= "" then msg = msg..L[playerData.class].." " end
+				if playerData.class and playerData.class ~= "" then
+					if announce == "Self" and not channel then
+						msg = msg .. L[playerData.class] .. " "
+					else
+						msg = msg .. strlower(playerData.class):gsub("^%l", strupper) .. " "
+					end
+				end
 			end
 			if playerData.zone then
 				if playerData.subZone and playerData.subZone ~= "" and playerData.subZone ~= playerData.zone then
